@@ -1,0 +1,23 @@
+{
+  "name": "without-bug-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haikavaks/without-bug-be-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/haikavaks/without-bug-be-node/issues"
+  },
+  "homepage": "https://github.com/haikavaks/without-bug-be-node#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
