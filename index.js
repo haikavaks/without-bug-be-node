@@ -1,19 +1,48 @@
+require('dotenv').config();
 const express = require('express')
 const app = express();
-const jwt = require('jsonwebtoken')
 const PORT = process.env.PORT || 80;
+// const cors = require('cors');
+const bodyParser = require('body-parser');
 
-app.get('/login',(req,res)=>{
-  res.end('<h1>home4</h1>')
-})
+const db = require("./app/models");
+const Role = db.role;
 
-app.post('/login',(req,res)=>{
-  console.log(req.body)
-  const userName = req.body.userName
-  const user = {name : userName}
-  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
-  res.json ({accessToken})
-})
+// todo Avoid force later
+db.sequelize.sync({force: true}).then(() => {
+  initial();
+});
+
+
+function initial() {
+  Role.create({
+    id: 1,
+    name: "superAdmin"
+  });
+
+  Role.create({
+    id: 2,
+    name: "admin"
+  });
+
+  Role.create({
+    id: 3,
+    name: "qa"
+  });
+  Role.create({
+    id: 4,
+    name: "company"
+  });
+}
+
+
+app.use(bodyParser.json());
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+
+require('./app/routes/auth.routes')(app);
+require('./app/routes/user.routes')(app);
 
 app.listen(PORT, ()=>{
   console.log('here');
