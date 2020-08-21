@@ -7,16 +7,20 @@ const Role = db.role;
 
 const Op = db.Sequelize.Op;
 
-var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 exports.signup = (req, res) => {
-  console.log(req.body, '======')
   // Save User to Database
+  const { firstName, lastName, country, email, bank, phone, password } = req.body;
   User.create({
-    username: req.body.username,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8)
+    firstName,
+    lastName,
+    country,
+    email,
+    bank,
+    phone,
+    password: bcrypt.hashSync(password, 8)
   })
     .then(user => {
       if (req.body.roles) {
@@ -27,15 +31,11 @@ exports.signup = (req, res) => {
             }
           }
         }).then(roles => {
-          user.setRoles(roles).then(() => {
-            res.send({ message: "User was registered successfully!" });
-          });
+          setRoleAndPosition(user, req.body, res, roles)
         });
       } else {
-        // user role = 1
-        user.setRoles([3]).then(() => {
-          res.send({ message: "User was registered successfully!" });
-        });
+        // user role = 3
+        setRoleAndPosition(user, req.body, res)
       }
     })
     .catch(err => {
@@ -43,10 +43,32 @@ exports.signup = (req, res) => {
     });
 };
 
+function setRoleAndPosition(user, reqBody, res, roles = [3]) {
+  user.setRoles(roles).then(() => {
+    // qa
+    if (reqBody.qa && reqBody.roles.includes('qa')) {
+      user.createQa(reqBody.qa).then(() => {
+        return res.send({ message: "User was registered successfully!" });
+      }).catch(err => {
+        return res.status(500).send({ message: err.message });
+      });
+    } else if (reqBody.company && reqBody.roles.includes('company')) {
+      user.createCompany(reqBody.company).then(() => {
+        return res.send({ message: "User was registered successfully!" });
+      }).catch(err => {
+        return res.status(500).send({ message: err.message });
+      });
+    } else {
+      return res.send({ message: "User was registered successfully!" });
+    }
+  });
+  return roles;
+}
+
 exports.signin = (req, res) => {
   User.findOne({
     where: {
-      username: req.body.username
+      email: req.body.email
     }
   })
     .then(user => {
@@ -54,7 +76,7 @@ exports.signin = (req, res) => {
         return res.status(404).send({ message: "User Not found." });
       }
 
-      var passwordIsValid = bcrypt.compareSync(
+      const passwordIsValid = bcrypt.compareSync(
         req.body.password,
         user.password
       );
@@ -70,7 +92,6 @@ exports.signin = (req, res) => {
         expiresIn: 86400 // 24 hours
         //TODO refresh token
       });
-
       let authorities = [];
       user.getRoles().then(roles => {
         for (let i = 0; i < roles.length; i++) {
@@ -78,8 +99,12 @@ exports.signin = (req, res) => {
         }
         res.status(200).send({
           id: user.id,
-          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          country: user.country,
           email: user.email,
+          bank: user.bank,
+          phone: user.phone,
           roles: authorities,
           accessToken: token
         });
