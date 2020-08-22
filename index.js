@@ -2,10 +2,8 @@ require('dotenv').config();
 const express = require('express')
 const cors = require('cors')
 const app = express();
-const PORT = process.env.PORT || 80;
-
-// const cors = require('cors');
 const bodyParser = require('body-parser');
+const PORT = process.env.PORT || 80;
 
 const db = require('./app/models');
 const Role = db.role;
@@ -38,7 +36,7 @@ function initial() {
 }
 
 
-//app.use(bodyParser.json());
+app.use(bodyParser.json());
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());

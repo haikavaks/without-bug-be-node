@@ -3,46 +3,31 @@ require('dotenv').config();
 
 
 const User = db.user;
-const Role = db.role;
-
-const Op = db.Sequelize.Op;
-
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-exports.getProfile = (req, res) => {
-  console.log(req.userId)
+exports.getProfile = async (req, res) => {
   // Get Profile
-  User.findOne({
-    where: {
-      uid: req.userId
-    }
-  })
-    .then(user => {
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
-      }
+  const user = await User.findByPk(req.userId)
+  if (!user) {
+    return res.status(404).send({ message: "User Not found." });
+  }
 
-      let authorities = [];
-      user.getRoles().then(roles => {
-        for (let i = 0; i < roles.length; i++) {
-          authorities.push("ROLE_" + roles[i].name.toUpperCase());
-        }
-        res.status(200).send({
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          country: user.country,
-          email: user.email,
-          bank: user.bank,
-          phone: user.phone,
-          roles: authorities,
-        });
-      });
-    })
-    .catch(err => {
-      res.status(500).send({ message: err.message });
-    });
+  let authorities = [];
+  const roles = await user.getRoles()
+  for (let i = 0; i < roles.length; i++) {
+    authorities.push("ROLE_" + roles[i].name.toUpperCase());
+  }
+  res.status(200).send({
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    country: user.country,
+    email: user.email,
+    bank: user.bank,
+    phone: user.phone,
+    roles: authorities,
+  });
 
 };
 
