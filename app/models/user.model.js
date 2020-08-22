@@ -1,5 +1,10 @@
 module.exports = (sequelize, Sequelize) => {
   return sequelize.define("users", {
+    uid: {
+      type: Sequelize.INTEGER,
+      primaryKey: true,
+      autoIncrement: true // Automatically gets converted to SERIAL for postgres
+    },
     firstName: {
       type: Sequelize.STRING
     },

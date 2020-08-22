@@ -3,12 +3,12 @@ exports.allAccess = (req, res) => {
 };
 
 exports.qaBoard = (req, res) => {
-  res.status(200).send("User Content.");
+  res.status(200).send("QA Content.");
 };
 
 
 exports.companyBoard = (req, res) => {
-  res.status(200).send("Moderator Content.");
+  res.status(200).send("Company Content.");
 };
 
 exports.adminBoard = (req, res) => {
