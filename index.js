@@ -9,8 +9,10 @@ const db = require('./app/models');
 const Role = db.role;
 
 // todo Avoid force later
-db.sequelize.sync({force: true}).then(() => {
+db.sequelize.sync({force: false}).then(() => {
   initial();
+}).catch(()=>{
+
 });
 
 

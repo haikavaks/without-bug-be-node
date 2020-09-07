@@ -27,8 +27,8 @@ db.user.belongsToMany(db.role, {
 });
 
 
-db.user.hasOne(db.qa, {foreignKey: 'userId',  unique: true});
-db.user.hasOne(db.company, {foreignKey: 'userId',  unique: true});
+db.user.hasOne(db.qa, {foreignKey: 'userId',  unique: true, onDelete: 'CASCADE'});
+db.user.hasOne(db.company, {foreignKey: 'userId',  unique: true, onDelete: 'CASCADE'});
 
 
 db.ROLES = ['superAdmin', 'admin', 'company', 'qa'];

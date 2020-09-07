@@ -1,8 +1,10 @@
 const db = require("../models");
 require('dotenv').config();
-
+const Sequelize = require('sequelize');
 
 const User = db.user;
+const Company = db.company;
+const Qa = db.qa;
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -15,8 +17,16 @@ exports.getProfile = async (req, res) => {
 
   let authorities = [];
   const roles = await user.getRoles()
+  let qa = []
+  let company = []
   for (let i = 0; i < roles.length; i++) {
     authorities.push("ROLE_" + roles[i].name.toUpperCase());
+    if (roles[i].name === 'company') {
+      company = await Company.findOne({ where: { userId: user.id } })
+    }
+    if (roles[i].name === 'qa') {
+      qa = await Qa.findOne({ where: { userId: user.id } })
+    }
   }
   res.status(200).send({
     id: user.id,
@@ -27,103 +37,81 @@ exports.getProfile = async (req, res) => {
     bank: user.bank,
     phone: user.phone,
     roles: authorities,
+    qa,
+    company
   });
 
 };
 
 exports.updateProfile = (req, res) => {
-  // User.findOne({
-  //   where: {
-  //     email: req.body.email
-  //   }
-  // })
-  //   .then(user => {
-  //     if (!user) {
-  //       return res.status(404).send({ message: "User Not found." });
-  //     }
-  //
-  //     const passwordIsValid = bcrypt.compareSync(
-  //       req.body.password,
-  //       user.password
-  //     );
-  //
-  //     if (!passwordIsValid) {
-  //       return res.status(401).send({
-  //         accessToken: null,
-  //         message: "Invalid Password!"
-  //       });
-  //     }
-  //
-  //     const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, {
-  //       expiresIn: 86400 // 24 hours
-  //       //TODO refresh token
-  //     });
-  //     let authorities = [];
-  //     user.getRoles().then(roles => {
-  //       for (let i = 0; i < roles.length; i++) {
-  //         authorities.push("ROLE_" + roles[i].name.toUpperCase());
-  //       }
-  //       res.status(200).send({
-  //         id: user.id,
-  //         firstName: user.firstName,
-  //         lastName: user.lastName,
-  //         country: user.country,
-  //         email: user.email,
-  //         bank: user.bank,
-  //         phone: user.phone,
-  //         roles: authorities,
-  //         accessToken: token
-  //       });
-  //     });
-  //   })
-  //   .catch(err => {
-  //     res.status(500).send({ message: err.message });
-  //   });
+  const userToUpdate = req.body;
+  const filter = {
+    where: {
+      id: parseInt(req.userId)
+    },
+    include: [
+      { model: Qa }
+    ]
+  };
+
+  User
+    //.findByPk(req.userId)
+    .findOne(filter)
+    .then(async (user) => {
+      if (!user) {
+        throw new Error(`User not found`);
+      }
+      let qaData = {};
+      let companyData = {};
+      if (userToUpdate.company) {
+        companyData = Object.assign({}, userToUpdate.company);
+        delete user.company;
+      }
+
+      if (userToUpdate.qa) {
+        //user.Qa.set(userToUpdate.qa, null);
+        qaData = Object.assign({}, userToUpdate.qa);
+        delete user.qa;
+      }
+      await user.update(userToUpdate).then(async () => {
+        if (qaData) {
+          const qa = await user.getQa();
+          if (qa) {
+            qa.update(qaData);
+          } else {
+            await user.createQa(qaData)
+            res.status(200).send({ message: "Successfully updated" });
+          }
+        }
+        if (companyData) {
+          const company = await user.getCompany();
+          if (company) {
+            company.update(companyData);
+          } else {
+            await user.createCompany(companyData)
+            res.status(200).send({ message: "Successfully updated" });
+          }
+        }
+        res.status(200).send({ message: "Successfully updated" });
+
+      })
+    })
 };
+
+
 exports.deleteProfile = (req, res) => {
   User.findOne({
     where: {
-      email: req.body.email
+      id: req.userId
     }
   })
     .then(user => {
       if (!user) {
         return res.status(404).send({ message: "User Not found." });
       }
-
-      const passwordIsValid = bcrypt.compareSync(
-        req.body.password,
-        user.password
-      );
-
-      if (!passwordIsValid) {
-        return res.status(401).send({
-          accessToken: null,
-          message: "Invalid Password!"
-        });
-      }
-
-      const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: 86400 // 24 hours
-        //TODO refresh token
-      });
-      let authorities = [];
-      user.getRoles().then(roles => {
-        for (let i = 0; i < roles.length; i++) {
-          authorities.push("ROLE_" + roles[i].name.toUpperCase());
-        }
-        res.status(200).send({
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          country: user.country,
-          email: user.email,
-          bank: user.bank,
-          phone: user.phone,
-          roles: authorities,
-          accessToken: token
-        });
-      });
+      user.destroy().then(()=>{
+        res.status(200).send({ message: "Successfully deleted" });
+      })
     })
     .catch(err => {
       res.status(500).send({ message: err.message });

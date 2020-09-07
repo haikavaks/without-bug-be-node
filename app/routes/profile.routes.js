@@ -10,7 +10,7 @@ module.exports = function(app) {
   });
 
   app.get("/api/v1/profile",[authJwt.verifyToken], controller.getProfile);
-  app.put("/api/v1/profile",[authJwt.verifyToken] ,controller.updateProfile);
+  app.post("/api/v1/profile",[authJwt.verifyToken] ,controller.updateProfile);
   app.delete("/api/v1/profile", [authJwt.verifyToken], controller.deleteProfile);
 
 };
