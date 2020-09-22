@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 80;
 
 const db = require('./app/models');
 const Role = db.role;
+const Gadget = db.gadget;
 
 // todo Avoid force later
 db.sequelize.sync({force: false}).then(() => {
@@ -35,6 +36,20 @@ function initial() {
     id: 4,
     name: 'company'
   });
+  Gadget.create({
+    brand: "One plus",
+    model: "5t",
+    osVersion: "Android 10",
+    type: "phone",
+    pending: false
+  })
+  // User.create({
+  //   firstName: "Hayk",
+  //   lastName: "avagyan",
+  //   email:"haikavaks@gmail.com",
+  //   password: ""
+  // })
+
 }
 
 
@@ -46,6 +61,7 @@ app.use(cors());
 require('./app/routes/auth.routes')(app);
 require('./app/routes/user.routes')(app);
 require('./app/routes/profile.routes')(app);
+require('./app/routes/gadgets.routes')(app);
 
 app.listen(PORT, ()=>{
   console.log('here');
