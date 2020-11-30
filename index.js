@@ -63,6 +63,5 @@ require('./app/routes/user.routes')(app);
 require('./app/routes/profile.routes')(app);
 require('./app/routes/gadgets.routes')(app);
 
-app.listen(PORT, ()=>{
-  console.log('here');
+app.listen(PORT, () => {;
 })
