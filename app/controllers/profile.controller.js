@@ -94,8 +94,12 @@ exports.updateProfile = (req, res) => {
         }
         res.status(200).send({ message: "Successfully updated" });
 
-      })
-    })
+      }).catch(err => {
+        res.status(500).send({ message: err.message });
+      });
+    }).catch(err => {
+    res.status(500).send({ message: err.message });
+  });
 };
 
 
