@@ -17,8 +17,9 @@ exports.getProfile = async (req, res) => {
 
   let authorities = [];
   const roles = await user.getRoles()
-  let qa = []
-  let company = []
+  let qa = [];
+  let company = [];
+  let gadgets = [];
   for (let i = 0; i < roles.length; i++) {
     authorities.push("ROLE_" + roles[i].name.toUpperCase());
     if (roles[i].name === 'company') {
@@ -26,6 +27,8 @@ exports.getProfile = async (req, res) => {
     }
     if (roles[i].name === 'qa') {
       qa = await Qa.findOne({ where: { userId: user.id } })
+      gadgets = await qa.getGadgets()
+      gadgets = gadgets.map(data=> data.id)
     }
   }
   res.status(200).send({
@@ -37,7 +40,10 @@ exports.getProfile = async (req, res) => {
     bank: user.bank,
     phone: user.phone,
     roles: authorities,
-    qa,
+    qa : {
+      ...qa.dataValues,
+      gadgets: gadgets
+    },
     company
   });
 
@@ -77,7 +83,13 @@ exports.updateProfile = (req, res) => {
         if (qaData) {
           const qa = await user.getQa();
           if (qa) {
+            const gadgets = Object.assign([], userToUpdate.qa.gadgets);
+            delete userToUpdate.qa.gadgets;
             qa.update(qaData);
+            qa.setGadgets(gadgets).then((data) => {
+            }, (err) => {
+              res.status(500).send({ message: err.message });
+            })
           } else {
             await user.createQa(qaData)
             res.status(200).send({ message: "Successfully updated" });
@@ -113,7 +125,7 @@ exports.deleteProfile = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: "User Not found." });
       }
-      user.destroy().then(()=>{
+      user.destroy().then(() => {
         res.status(200).send({ message: "Successfully deleted" });
       })
     })
